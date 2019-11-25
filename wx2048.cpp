@@ -113,7 +113,7 @@ class Board {
     };
 
   public:
-    Board() { reset(); }
+    Board() { grid.best = 0; reset(); }
     ~Board() {}
 
     int best() { return grid.best; }
