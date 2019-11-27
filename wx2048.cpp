@@ -13,10 +13,20 @@
 typedef struct Grid Grid;
 typedef int Cells[4][4];
 typedef int (*Move)(Grid *);
+typedef struct Score {
+    int current;
+    int highest;
+    void increase(int delta) {
+        current += delta;
+        if (current > highest)
+            highest = current;
+    }
+} Score;
+
 struct Grid {
-    int best;
+    int maxnum;
     int ncell;
-    int score;
+    Score score;
     Cells cells;
 
     bool movable() { return ncell > 0 || movable(cells); }
@@ -41,6 +51,7 @@ struct Grid {
         randnum = (rand() % 100) >= 80 ? 4 : 2;
         randxy = rand() % ncell;
         ncell -= 1;
+        if (randnum > maxnum) maxnum = randnum;
         int i, j, icell = 0;
         for (i = 0; i < 4; ++i) {
             for (j = 0; j < 4; ++j) {
@@ -70,6 +81,8 @@ struct Grid {
                     continue;                           \
                 if (cells[x1][y1] == cells[x2][y2]) {   \
                     cells[x1][y1] <<= 1;                \
+                    if (cells[x1][y1] > grid->maxnum)   \
+                        grid->maxnum = cells[x1][y1];   \
                     score += cells[x1][y1];             \
                     ncell++;                            \
                     inc k;                              \
@@ -85,9 +98,7 @@ struct Grid {
         }                                               \
         if (score > 0) {                                \
             grid->ncell += ncell;                       \
-            grid->score += score;                       \
-            if (grid->score > grid->best)               \
-                grid->best = grid->score;               \
+            grid->score.increase(score);                \
             return score;                               \
         }                                               \
         return moved;                                   \
@@ -115,18 +126,21 @@ class Board {
     };
 
   public:
-    Board() { grid.best = 0; reset(); }
+    Board() { grid.score.highest = 0; reset(); }
     ~Board() {}
 
-    int best() { return grid.best; }
-    int score() { return grid.score; }
+    int best() { return grid.score.highest; }
+    int score() { return grid.score.current; }
     int ncell() { return grid.ncell; }
     int move(int key) { return (moves[key])(&grid); }
     int add_random() { return grid.ncell > 0 ? grid.add_random() : -1; }
     bool isalive() { return grid.movable(); }
+    bool iswon() { return grid.maxnum >= 2048; }
+
     void reset() {
+        grid.maxnum = 0;
         grid.ncell = 16;
-        grid.score = 0;
+        grid.score.current = 0;
         memset(grid.cells, 0, sizeof (Cells));
         add_random();
     }
@@ -141,7 +155,11 @@ class Board {
     void load(const char *record) {
         FILE *pf = fopen(record, "rb");
         if (!pf) return;
-        fread(&grid, sizeof (Grid), 1, pf);
+        fseek(pf, 0L, SEEK_END);
+        if (ftell(pf) == sizeof (Grid)) {
+            rewind(pf);
+            fread(&grid, sizeof (Grid), 1, pf);
+        }
         fclose(pf);
     }
 
@@ -193,15 +211,15 @@ class TabBar {
 
         dc.SetFont(wxFontInfo(20).Bold(2));
         dc.SetTextForeground(title_name_color);
-        dc.DrawLabel("KEY", arrow_caption, wxALIGN_CENTER);
         dc.DrawLabel("SCORE", score_caption, wxALIGN_CENTER);
         dc.DrawLabel("BEST", best_caption, wxALIGN_CENTER);
+        dc.DrawLabel("KEY", arrow_caption, wxALIGN_CENTER);
 
         dc.SetFont(wxFontInfo(16).Bold(2));
         dc.SetTextForeground(title_value_color);
-        dc.DrawLabel(arrow, arrow_content, wxALIGN_CENTER);
         dc.DrawLabel(score, score_content, wxALIGN_CENTER);
         dc.DrawLabel(best, best_content, wxALIGN_CENTER);
+        dc.DrawLabel(arrow, arrow_content, wxALIGN_CENTER);
     }
 };
 
@@ -286,13 +304,18 @@ class GameWindow : public wxFrame {
             int moved = board.move(kcode);
             if (moved) {
                 wxString status;
-                if (moved > 1)
+                if (moved > 1) {
                     status << "+" << moved;
+                    if (board.iswon()) {
+                        GameWon();
+                    }
+                }
                 SetStatusText(status);
 
                 board.add_random();
                 if (!board.isalive())
                     GameOver();
+
                 Refresh();
             }
         }
@@ -305,20 +328,25 @@ class GameWindow : public wxFrame {
             GameStart();
         Show(true);
     }
-    void GameOver() {
-        gameover = true;
-        // printf("GameOver: score(%d)\n", board.score());
-        SetStatusText(wxString("Game Over!\tPress F5 to restart"));
+    void GameWon() {}
+    void GameFailed() {}
+    void GameResart() {
+        board.reset();
+        GameStart();
+        Refresh();
     }
     void GameStart() {
         // printf("GameStart: ncell(%d)\n", board.ncell());
         gameover = false;
         srand((unsigned)time(NULL));
     }
-    void GameResart() {
-        board.reset();
-        GameStart();
-        Refresh();
+    void GameOver() {
+        gameover = true;
+        // printf("GameOver: score(%d)\n", board.score());
+        SetStatusText(wxString("Game Over!\tPress F5 to restart"));
+        if (!board.iswon()) {
+            GameFailed();
+        }
     }
     void SaveRecord() { board.save("RECORD"); }
     void LoadRecord() { board.load("RECORD"); }
