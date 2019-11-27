@@ -29,16 +29,11 @@ struct Grid {
     Score score;
     Cells cells;
 
-    bool movable() { return ncell > 0 || movable(cells); }
-    bool movable(Cells cells) {
+    bool movable() {
+        if (ncell > 0) return true;
         for (int i = 0; i < 4; ++i) {
             for (int j = 1; j < 4; ++j) {
-                // unnecessary judgement for number 0,
-                // cause we have known that ncell == 0
-                if (cells[i][j - 1] == 0 || cells[i][j] == 0 ||
-                    cells[i][j - 1] == cells[i][j])
-                    return true;
-                if (cells[j - 1][i] == 0 || cells[j][i] == 0 ||
+                if (cells[i][j - 1] == cells[i][j] ||
                     cells[j - 1][i] == cells[j][i])
                     return true;
             }
@@ -46,23 +41,22 @@ struct Grid {
         return false;
     }
 
+    // return the index of the new added number
     int add_random() {
-        int randnum, randxy;
-        randnum = (rand() % 100) >= 80 ? 4 : 2;
-        randxy = rand() % ncell;
-        ncell -= 1;
+        int randidx = rand() % ncell;
+        int randnum = (rand() % 100) >= 80 ? 4 : 2;
         if (randnum > maxnum) maxnum = randnum;
-        int i, j, icell = 0;
+
+        int i, j, count = 0;
         for (i = 0; i < 4; ++i) {
             for (j = 0; j < 4; ++j) {
-                if (cells[i][j] == 0) {
-                    // the i-th blank cell
-                    if (icell == randxy) {
-                        cells[i][j] = randnum;
-                        return icell;
-                    }
-                    icell++;
+                if (cells[i][j]) continue;
+                if (count == randidx) {
+                    cells[i][j] = randnum;
+                    ncell -= 1;
+                    return i * 4 + j;
                 }
+                count++;
             }
         }
         return -1;
@@ -306,9 +300,8 @@ class GameWindow : public wxFrame {
                 wxString status;
                 if (moved > 1) {
                     status << "+" << moved;
-                    if (board.iswon()) {
+                    if (board.iswon())
                         GameWon();
-                    }
                 }
                 SetStatusText(status);
 
@@ -344,9 +337,8 @@ class GameWindow : public wxFrame {
         gameover = true;
         // printf("GameOver: score(%d)\n", board.score());
         SetStatusText(wxString("Game Over!\tPress F5 to restart"));
-        if (!board.iswon()) {
+        if (!board.iswon())
             GameFailed();
-        }
     }
     void SaveRecord() { board.save("RECORD"); }
     void LoadRecord() { board.load("RECORD"); }
