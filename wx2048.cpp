@@ -290,7 +290,7 @@ class GameWindow : public wxFrame {
                 kcode = 3;
                 break;
             case WXK_F5:
-                GameResart();
+                GameRestart();
                 return;
 
             default: ;
@@ -325,7 +325,7 @@ class GameWindow : public wxFrame {
     }
     void GameWon() {}
     void GameFailed() {}
-    void GameResart() {
+    void GameRestart() {
         board.reset();
         GameStart();
         Refresh();
