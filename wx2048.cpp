@@ -29,6 +29,15 @@ struct Grid {
     Score score;
     Cells cells;
 
+    void init() { score.highest = 0; reset(); }
+    void reset() {
+        maxnum = 0;
+        ncell = 16;
+        score.current = 0;
+        memset(cells, 0, sizeof (Cells));
+        add_random();
+    }
+
     bool movable() {
         if (ncell > 0) return true;
         for (int i = 0; i < 4; ++i) {
@@ -120,7 +129,7 @@ class Board {
     };
 
   public:
-    Board() { grid.score.highest = 0; reset(); }
+    Board() { grid.init(); }
     ~Board() {}
 
     int best() { return grid.score.highest; }
@@ -130,14 +139,7 @@ class Board {
     int add_random() { return grid.ncell > 0 ? grid.add_random() : -1; }
     bool isalive() { return grid.movable(); }
     bool iswon() { return grid.maxnum >= 2048; }
-
-    void reset() {
-        grid.maxnum = 0;
-        grid.ncell = 16;
-        grid.score.current = 0;
-        memset(grid.cells, 0, sizeof (Cells));
-        add_random();
-    }
+    void reset() { grid.reset(); }
 
     void save(const char *record) {
         FILE *pf = fopen(record, "wb+");
