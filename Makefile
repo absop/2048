@@ -26,11 +26,12 @@ LIBRARY = -L$(lib_dir) $(libs)
 INCLUDE = -I$(wx_dir)/include -I$(lib_dir)/mswu
 
 
-$(executable): icon.o $(source)
-	$(cpp) -o $@ $^ $(CPPFLAGS) $(INCLUDE) $(LIBRARY)
+$(executable): 2048.xpm icon.o $(source)
+	$(cpp) -o $@ icon.o $(source) $(CPPFLAGS) $(INCLUDE) $(LIBRARY)
 
-icon.o: .rc
-	windres -o $@ $^
+
+icon.o: .rc 2048.ico
+	windres -o $@ .rc
 
 
 compress: $(executable)
