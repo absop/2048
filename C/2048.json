@@ -1,0 +1,34 @@
+{
+  "color": {
+    "foreground": {
+      "button_down":  "#ADD817",
+      "button":       "#FFFFFF",
+      "new_num":      "#FFFFFF",
+      "number":       "#282828",
+      "scorebar":     "#9554E0",
+    },
+    // bg colors for grids
+    "background": {
+           "0":     "#EDEDED",
+           "2":     "#C9C9C9",
+           "4":     "#D3D385",
+           "8":     "#E8BE8B",
+          "16":     "#F4A460",
+          "32":     "#F48D4A",
+          "64":     "#FF7F50",
+         "128":     "#F5725B",
+         "256":     "#F86048",
+         "512":     "#D85C4c",
+        "1024":     "#CD5C5C",
+        "2048":     "#C9413C",
+        "4096":     "#B53835",
+        "8192":     "#A52A2A",
+       "16384":     "#A13A3A",
+       "32768":     "#B4122A",
+       "65536":     "#B02031",
+         "end":     "#F6415D",
+      "button":     "#9ACD32",
+    "scorebar":     "#EDEDED"
+    }
+  }
+}
